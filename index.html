@@ -2,264 +2,93 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Harshit — Photo Showcase</title>
-  <meta name="description" content="A sleek, minimal photo showcase with subtle animations and dark mode." />
-  <link rel="preload" as="image" href="harshit.jpeg" />
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>📸</text></svg>">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Catch the Squares</title>
   <style>
-    :root {
-      --bg-start: 246 247 251;
-      --bg-end: 230 242 255;
-      --text: 22 24 29;
-      --muted: 90 96 110;
-      --card: 255 255 255 / 0.6;
-      --accent: 99 102 241; /* indigo-500 */
-      --ring: 99 102 241 / 0.45;
-    }
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg-start: 12 12 16;
-        --bg-end: 18 24 38;
-        --text: 236 237 239;
-        --muted: 160 165 177;
-        --card: 20 24 36 / 0.55;
-        --accent: 139 92 246; /* violet-500 */
-        --ring: 139 92 246 / 0.45;
-      }
-    }
-
-    * { box-sizing: border-box; }
-    html, body { height: 100%; }
     body {
       margin: 0;
-      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
-      color: rgb(var(--text));
-      background: linear-gradient(120deg, rgb(var(--bg-start)), rgb(var(--bg-end)));
-      background-attachment: fixed;
-      overflow-x: hidden;
+      font-family: sans-serif;
+      background: #111;
+      color: white;
+      text-align: center;
     }
-
-    .grid {
-      min-height: 100vh;
-      display: grid;
-      place-items: center;
-      padding: 6vmin 5vmin 10vmin;
-    }
-
-    .card {
-      width: min(1100px, 92vw);
-      border-radius: 22px;
-      background: radial-gradient(1200px 600px at 20% -10%, rgb(var(--ring)) 0%, transparent 60%),
-                  radial-gradient(800px 500px at 120% 120%, rgb(var(--ring)) 0%, transparent 55%),
-                  color-mix(in oklab, rgb(var(--bg-end)) 60%, transparent);
-      backdrop-filter: blur(10px) saturate(1.1);
-      -webkit-backdrop-filter: blur(10px) saturate(1.1);
-      box-shadow: 0 30px 60px rgba(0,0,0,0.18);
-      border: 1px solid rgba(255,255,255,0.35);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding: clamp(14px, 2.5vmin, 24px) clamp(16px, 3vmin, 28px);
-    }
-
-    .title {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-weight: 700;
-      letter-spacing: 0.2px;
-      font-size: clamp(18px, 2.6vmin, 24px);
-    }
-
-    .dot {
-      width: 10px; height: 10px; border-radius: 50%;
-      background: rgb(var(--accent));
-      box-shadow: 0 0 0 6px rgba(99,102,241,0.12);
-    }
-
-    .actions { display: flex; gap: 10px; align-items: center; }
-
-    button, .ghost-btn {
-      appearance: none;
-      border: none;
-      border-radius: 14px;
-      padding: 10px 14px;
-      font-size: 14px;
-      cursor: pointer;
-      transition: transform .15s ease, box-shadow .2s ease, background .2s ease;
-      background: rgba(255,255,255,0.7);
-      color: rgb(var(--text));
-      box-shadow: 0 4px 14px rgba(0,0,0,0.08);
-      backdrop-filter: blur(6px);
-    }
-    .ghost-btn { background: transparent; border: 1px solid rgba(255,255,255,0.5); }
-    button:hover, .ghost-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(0,0,0,0.12); }
-
-    .photo-wrap {
-      position: relative;
-      isolation: isolate;
-      margin: 6px;
-      border-radius: 18px;
-      overflow: hidden;
-    }
-
-    img.photo {
+    canvas {
       display: block;
-      width: 100%;
-      height: auto;
-      aspect-ratio: 16/10;
-      object-fit: cover;
-      transform-origin: center;
-      transition: transform 0.6s cubic-bezier(.22,.61,.36,1), filter .4s ease;
+      margin: 0 auto;
+      background: #222;
+      border: 2px solid #fff;
     }
-
-    .photo-wrap:hover img.photo { transform: scale(1.02); }
-
-    .badge {
-      position: absolute; inset: 16px auto auto 16px;
-      padding: 8px 12px; border-radius: 999px;
-      font-size: 12px; font-weight: 600; letter-spacing: .3px;
-      background: rgba(0,0,0,0.55); color: #fff;
-      backdrop-filter: blur(6px);
-      user-select: none;
+    #score {
+      font-size: 1.5rem;
+      margin: 10px 0;
     }
-
-    .footer {
-      display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between;
-      padding: clamp(14px, 2.5vmin, 24px) clamp(16px, 3vmin, 28px) 24px;
-    }
-
-    .hint { color: rgb(var(--muted)); font-size: 13px; }
-
-    /* Fullscreen mode */
-    .fullscreen {
-      position: fixed; inset: 0; z-index: 40; margin: 0; border-radius: 0;
-      background: #000;
-      display: grid; place-items: center;
-      animation: fadeIn .2s ease;
-    }
-    .fullscreen img.photo { max-height: 96vh; width: auto; height: auto; transform: none !important; }
-
-    @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
-
-    /* Subtle animated background orbs */
-    .orb { position: absolute; filter: blur(60px); opacity: .5; border-radius: 50%; mix-blend-mode: screen; }
-    .orb.one { width: 360px; height: 360px; background: rgba(99,102,241,.45); top: -100px; left: -80px; animation: float1 18s ease-in-out infinite; }
-    .orb.two { width: 320px; height: 320px; background: rgba(56,189,248,.35); bottom: -120px; right: -80px; animation: float2 22s ease-in-out infinite; }
-    @keyframes float1 { 0%,100% { transform: translateY(0) } 50% { transform: translateY(18px) } }
-    @keyframes float2 { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-14px) } }
-
-    /* Drag & drop overlay */
-    .drop-hint { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(0,0,0,.35); color: #fff; font-weight: 600; letter-spacing: .4px; opacity: 0; pointer-events: none; transition: opacity .2s ease; }
-    .photo-wrap.dragover .drop-hint { opacity: 1; }
-
-    a.link { color: rgb(var(--accent)); text-decoration: none; border-bottom: 1px dashed rgba(var(--accent)/.3); }
   </style>
 </head>
 <body>
-  <main class="grid">
-    <section class="card" aria-label="Photo showcase">
-      <div class="orb one" aria-hidden="true"></div>
-      <div class="orb two" aria-hidden="true"></div>
-
-      <header class="header">
-        <div class="title"><span class="dot"></span> <span>Harshit’s Photo</span></div>
-        <div class="actions">
-          <button id="viewBtn" title="(F) Fullscreen">View Fullscreen</button>
-          <button id="downloadBtn" title="Download image">Download</button>
-          <button id="themeBtn" class="ghost-btn" title="(T) Toggle theme">Toggle Theme</button>
-        </div>
-      </header>
-
-      <div id="photoWrap" class="photo-wrap" tabindex="0" aria-label="Photo container" role="region">
-        <img id="photo" class="photo" src="harshit.jpeg" alt="Main showcase photo" loading="eager" />
-        <div class="badge">Drag & drop a new image</div>
-        <div class="drop-hint">Drop to replace the photo</div>
-      </div>
-
-      <footer class="footer">
-        <div class="hint">Tips: Press <b>F</b> for fullscreen, <b>T</b> to toggle theme. Drop an image to replace it (no upload, local only).</div>
-        <div class="hint">Made with ♥ — purely static, perfect for GitHub Pages.</div>
-      </footer>
-    </section>
-  </main>
+  <h1>🎯 Catch the Squares!</h1>
+  <p id="score">Score: 0</p>
+  <canvas id="game" width="400" height="600"></canvas>
 
   <script>
-    const photo = document.getElementById('photo');
-    const wrap = document.getElementById('photoWrap');
-    const viewBtn = document.getElementById('viewBtn');
-    const downloadBtn = document.getElementById('downloadBtn');
-    const themeBtn = document.getElementById('themeBtn');
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
 
-    // Fullscreen toggle
-    function toggleFullscreen() {
-      if (!document.fullscreenElement) {
-        wrap.classList.add('fullscreen');
-        wrap.requestFullscreen?.();
-        viewBtn.textContent = 'Exit Fullscreen';
-      } else {
-        document.exitFullscreen?.();
-        wrap.classList.remove('fullscreen');
-        viewBtn.textContent = 'View Fullscreen';
+    let score = 0;
+    const player = { x: 175, y: 550, width: 50, height: 20, speed: 5 };
+    const squares = [];
+
+    function spawnSquare() {
+      const x = Math.random() * (canvas.width - 20);
+      squares.push({ x, y: 0, size: 20, speed: 2 + Math.random() * 2 });
+    }
+
+    function update() {
+      // Move squares
+      for (let i = squares.length - 1; i >= 0; i--) {
+        squares[i].y += squares[i].speed;
+        // Collision detection
+        if (
+          squares[i].y + squares[i].size >= player.y &&
+          squares[i].x < player.x + player.width &&
+          squares[i].x + squares[i].size > player.x
+        ) {
+          score++;
+          squares.splice(i, 1);
+        } else if (squares[i].y > canvas.height) {
+          squares.splice(i, 1); // missed square
+        }
+      }
+      document.getElementById("score").textContent = "Score: " + score;
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "cyan";
+      ctx.fillRect(player.x, player.y, player.width, player.height);
+
+      ctx.fillStyle = "red";
+      for (let square of squares) {
+        ctx.fillRect(square.x, square.y, square.size, square.size);
       }
     }
 
-    viewBtn.addEventListener('click', toggleFullscreen);
-    document.addEventListener('fullscreenchange', () => {
-      if (!document.fullscreenElement) wrap.classList.remove('fullscreen');
-    });
-
-    // Download current image
-    downloadBtn.addEventListener('click', () => {
-      const a = document.createElement('a');
-      a.href = photo.src;
-      const urlParts = photo.src.split('/');
-      a.download = urlParts[urlParts.length - 1] || 'photo.jpg';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-    });
-
-    // Theme toggle (light/dark) with localStorage preference
-    const THEME_KEY = 'prefers-dark';
-    function applyTheme(dark) {
-      document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
-      document.body.dataset.theme = dark ? 'dark' : 'light';
-      themeBtn.textContent = dark ? 'Light Mode' : 'Dark Mode';
+    function gameLoop() {
+      update();
+      draw();
+      requestAnimationFrame(gameLoop);
     }
-    const stored = localStorage.getItem(THEME_KEY);
-    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    applyTheme(stored === null ? systemDark : stored === 'true');
-    themeBtn.addEventListener('click', () => {
-      const nowDark = !(document.body.dataset.theme === 'dark');
-      localStorage.setItem(THEME_KEY, String(nowDark));
-      applyTheme(nowDark);
+
+    // Controls
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowLeft" && player.x > 0) player.x -= player.speed;
+      if (e.key === "ArrowRight" && player.x < canvas.width - player.width)
+        player.x += player.speed;
     });
 
-    // Drag & drop to replace image (local preview only)
-    ['dragenter','dragover'].forEach(evt => wrap.addEventListener(evt, e => { e.preventDefault(); wrap.classList.add('dragover'); }));
-    ['dragleave','drop'].forEach(evt => wrap.addEventListener(evt, e => { e.preventDefault(); wrap.classList.remove('dragover'); }));
-    wrap.addEventListener('drop', e => {
-      const file = e.dataTransfer.files?.[0];
-      if (!file) return;
-      if (!file.type.startsWith('image/')) { alert('Please drop an image file.'); return; }
-      const reader = new FileReader();
-      reader.onload = evt => { photo.src = evt.target.result; };
-      reader.readAsDataURL(file);
-    });
+    // Spawn a new square every 1 second
+    setInterval(spawnSquare, 1000);
 
-    // Keyboard shortcuts
-    document.addEventListener('keydown', (e) => {
-      if (e.key.toLowerCase() === 'f') toggleFullscreen();
-      if (e.key.toLowerCase() === 't') themeBtn.click();
-    });
+    gameLoop();
   </script>
 </body>
 </html>
