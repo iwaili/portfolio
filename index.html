@@ -2,93 +2,320 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Catch the Squares</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Send a Little Space ✨</title>
+  <meta name="description" content="Generate animated starfield postcards with your own message. Save as PNG. No libraries, pure HTML/CSS/JS." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>✨</text></svg>">
   <style>
+    :root {
+      --bg1: #070814;
+      --bg2: #0b1026;
+      --panel: rgba(16,18,40,.55);
+      --border: rgba(255,255,255,.15);
+      --text: #eef2ff;
+      --muted: #aab3d3;
+      --accent: #7c83ff;
+    }
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg1: #eef2ff;
+        --bg2: #dde7ff;
+        --panel: rgba(255,255,255,.65);
+        --border: rgba(0,0,0,.1);
+        --text: #0b1026;
+        --muted: #4c567a;
+        --accent: #6366f1;
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
     body {
       margin: 0;
-      font-family: sans-serif;
-      background: #111;
-      color: white;
-      text-align: center;
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      color: var(--text);
+      background: radial-gradient(1200px 800px at 50% -10%, var(--bg2), transparent 60%),
+                  radial-gradient(1200px 800px at 50% 110%, var(--bg2), transparent 60%),
+                  linear-gradient(180deg, var(--bg1), var(--bg2));
+      overflow: hidden;
     }
-    canvas {
-      display: block;
-      margin: 0 auto;
-      background: #222;
-      border: 2px solid #fff;
+
+    #stars, #postcardCanvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+    #stars { z-index: 0; }
+    #postcardCanvas { z-index: 1; pointer-events: none; }
+
+    .panel {
+      position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
+      width: min(640px, 92vw);
+      background: var(--panel);
+      backdrop-filter: blur(12px) saturate(1.1);
+      -webkit-backdrop-filter: blur(12px) saturate(1.1);
+      border: 1px solid var(--border);
+      box-shadow: 0 30px 60px rgba(0,0,0,.35);
+      border-radius: 20px;
+      z-index: 2;
+      overflow: hidden;
     }
-    #score {
-      font-size: 1.5rem;
-      margin: 10px 0;
+
+    .header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 18px; border-bottom: 1px solid var(--border); }
+    .title { font-weight: 800; letter-spacing: .3px; display: flex; align-items: center; gap: 10px; }
+    .title .spark { filter: drop-shadow(0 2px 6px rgba(124,131,255,.55)); }
+
+    .content { display: grid; gap: 14px; padding: 16px 18px 18px; }
+    label { font-size: 13px; color: var(--muted); }
+    textarea, input, select { width: 100%; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--border); background: rgba(255,255,255,.06); color: var(--text); outline: none; }
+    textarea { resize: vertical; min-height: 84px; }
+    .row { display: grid; gap: 12px; grid-template-columns: 1fr 1fr; }
+
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; padding: 14px 18px 18px; border-top: 1px solid var(--border); }
+    .btn {
+      appearance: none; border: 1px solid var(--border); border-radius: 14px;
+      padding: 10px 14px; font-weight: 600; letter-spacing: .2px; cursor: pointer;
+      background: linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.06));
+      color: var(--text); box-shadow: 0 6px 18px rgba(0,0,0,.18);
+      transition: transform .15s ease, box-shadow .2s ease, background .2s ease;
     }
+    .btn:hover { transform: translateY(-1px); box-shadow: 0 10px 24px rgba(0,0,0,.24); }
+    .btn.accent { border-color: rgba(124,131,255,.6); background: linear-gradient(180deg, rgba(124,131,255,.35), rgba(124,131,255,.12)); }
+
+    .hint { font-size: 12px; color: var(--muted); }
+
+    .badge { position: fixed; left: 50%; bottom: 12px; transform: translateX(-50%); font-size: 12px; color: var(--muted); z-index: 3; backdrop-filter: blur(8px); padding: 6px 10px; border-radius: 999px; border: 1px solid var(--border); background: var(--panel); }
+
+    .palette { display: inline-flex; gap: 6px; align-items: center; }
+    .swatch { width: 18px; height: 18px; border-radius: 50%; border: 1px solid var(--border); box-shadow: inset 0 0 0 1px rgba(255,255,255,.15); }
   </style>
 </head>
 <body>
-  <h1>🎯 Catch the Squares!</h1>
-  <p id="score">Score: 0</p>
-  <canvas id="game" width="400" height="600"></canvas>
+  <canvas id="stars" aria-hidden="true"></canvas>
+  <canvas id="postcardCanvas" aria-hidden="true"></canvas>
+
+  <section class="panel" role="dialog" aria-label="Star Postcard Generator">
+    <header class="header">
+      <div class="title"><span class="spark">✨</span> Send a Little Space</div>
+      <button class="btn" id="randomizeBtn" title="Randomize settings (R)">Randomize</button>
+    </header>
+    <div class="content">
+      <div>
+        <label for="message">Message</label>
+        <textarea id="message" placeholder="Type a cosmic note… e.g. You are stardust and snacks."></textarea>
+      </div>
+      <div class="row">
+        <div>
+          <label for="signature">Signature</label>
+          <input id="signature" placeholder="— Harshit" />
+        </div>
+        <div>
+          <label for="density">Star Density (<span id="densityVal">1200</span>)</label>
+          <input id="density" type="range" min="400" max="2600" step="100" value="1200" />
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="paletteSel">Palette</label>
+          <select id="paletteSel"></select>
+        </div>
+        <div>
+          <label for="fontSel">Font</label>
+          <select id="fontSel">
+            <option value="system-ui">System UI</option>
+            <option value="'SF Pro Display', -apple-system, system-ui">SF Pro</option>
+            <option value="'Georgia', serif">Georgia</option>
+            <option value="'Courier New', monospace">Courier</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label class="hint">Pro tip: Press <b>R</b> to randomize the stars and palette. Press <b>S</b> to save your postcard.</label>
+      </div>
+      <div class="palette" id="palettePreview" aria-hidden="true"></div>
+    </div>
+    <div class="actions">
+      <div class="hint">Made with zero libraries. Maximum space vibes.</div>
+      <div>
+        <button class="btn" id="previewBtn">Preview</button>
+        <button class="btn accent" id="saveBtn">Save PNG</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="badge">Drag to resize window — stars adapt in real-time.</div>
 
   <script>
-    const canvas = document.getElementById("game");
-    const ctx = canvas.getContext("2d");
+    // --- Utility ---
+    const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+    const rand = (a=0, b=1) => Math.random() * (b - a) + a;
 
-    let score = 0;
-    const player = { x: 175, y: 550, width: 50, height: 20, speed: 5 };
-    const squares = [];
+    // --- Palettes ---
+    const PALETTES = [
+      { name: 'Nebula Orchid', colors: ['#c084fc','#a78bfa','#60a5fa','#22d3ee'] },
+      { name: 'Aurora Mint', colors: ['#34d399','#22d3ee','#60a5fa','#f472b6'] },
+      { name: 'Solar Flair', colors: ['#f59e0b','#f97316','#ef4444','#f472b6'] },
+      { name: 'Cosmic Blue', colors: ['#93c5fd','#60a5fa','#3b82f6','#1d4ed8'] },
+      { name: 'Deep Space', colors: ['#e5e7eb','#a5b4fc','#818cf8','#6366f1'] },
+    ];
 
-    function spawnSquare() {
-      const x = Math.random() * (canvas.width - 20);
-      squares.push({ x, y: 0, size: 20, speed: 2 + Math.random() * 2 });
+    const paletteSel = document.getElementById('paletteSel');
+    const palettePreview = document.getElementById('palettePreview');
+    PALETTES.forEach((p, i) => {
+      const opt = document.createElement('option');
+      opt.value = i; opt.textContent = p.name; paletteSel.appendChild(opt);
+    });
+    function updatePalettePreview() {
+      palettePreview.innerHTML = '';
+      const pal = PALETTES[+paletteSel.value];
+      pal.colors.forEach(c => { const s = document.createElement('div'); s.className = 'swatch'; s.style.background = c; palettePreview.appendChild(s); });
     }
 
-    function update() {
-      // Move squares
-      for (let i = squares.length - 1; i >= 0; i--) {
-        squares[i].y += squares[i].speed;
-        // Collision detection
-        if (
-          squares[i].y + squares[i].size >= player.y &&
-          squares[i].x < player.x + player.width &&
-          squares[i].x + squares[i].size > player.x
-        ) {
-          score++;
-          squares.splice(i, 1);
-        } else if (squares[i].y > canvas.height) {
-          squares.splice(i, 1); // missed square
-        }
+    // --- Stars background ---
+    const starCanvas = document.getElementById('stars');
+    const sctx = starCanvas.getContext('2d');
+
+    let W=0,H=0, stars=[]; // star positions
+    function resize() { W = starCanvas.width = window.innerWidth; H = starCanvas.height = window.innerHeight; makeStars(); drawStars(0); }
+    window.addEventListener('resize', resize);
+
+    const density = document.getElementById('density');
+    const densityVal = document.getElementById('densityVal');
+
+    function makeStars() {
+      const count = Math.floor((W*H) / +density.value);
+      stars = Array.from({length: count}, () => ({
+        x: Math.random()*W,
+        y: Math.random()*H,
+        z: rand(0.2, 1.2), // depth factor
+        tw: rand(0.2, 1),  // twinkle speed
+      }));
+      densityVal.textContent = density.value;
+    }
+
+    let t=0; // time
+    function drawStars(dt) {
+      t += dt;
+      sctx.clearRect(0,0,W,H);
+      const pal = PALETTES[+paletteSel.value].colors;
+      for (const s of stars) {
+        const size = clamp(1.2 * (1.4 - s.z), 0.2, 1.5);
+        const tw = 0.6 + 0.4 * Math.sin((t*s.tw) + s.x*0.02);
+        sctx.globalAlpha = tw;
+        sctx.fillStyle = pal[Math.floor((s.x + s.y) % pal.length)];
+        sctx.fillRect(s.x, s.y, size, size);
+        s.y += 0.02 * (2 - s.z); // slow drift
+        if (s.y > H) s.y = -2;
       }
-      document.getElementById("score").textContent = "Score: " + score;
+      sctx.globalAlpha = 1;
     }
 
-    function draw() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = "cyan";
-      ctx.fillRect(player.x, player.y, player.width, player.height);
+    let last=performance.now();
+    function loop(now){ const dt=(now-last)/1000; last=now; drawStars(dt); requestAnimationFrame(loop); }
 
-      ctx.fillStyle = "red";
-      for (let square of squares) {
-        ctx.fillRect(square.x, square.y, square.size, square.size);
+    // --- Postcard render ---
+    const pc = document.getElementById('postcardCanvas');
+    const pctx = pc.getContext('2d');
+
+    function renderPostcard() {
+      pc.width = window.innerWidth; pc.height = window.innerHeight;
+      const pal = PALETTES[+paletteSel.value].colors;
+
+      // vignette
+      const grd = pctx.createRadialGradient(pc.width/2, pc.height/2, Math.min(pc.width,pc.height)/6, pc.width/2, pc.height/2, Math.max(pc.width,pc.height)/1.1);
+      grd.addColorStop(0, 'rgba(0,0,0,0)');
+      grd.addColorStop(1, 'rgba(0,0,0,0.55)');
+      pctx.fillStyle = grd; pctx.fillRect(0,0,pc.width,pc.height);
+
+      // text box
+      const boxW = Math.min(740, pc.width*0.78);
+      const boxX = (pc.width - boxW)/2;
+      const boxY = pc.height*0.18;
+      const boxH = Math.min(360, pc.height*0.46);
+
+      pctx.fillStyle = 'rgba(10,12,28,.55)';
+      pctx.strokeStyle = 'rgba(255,255,255,.18)';
+      pctx.lineWidth = 1;
+      roundRect(pctx, boxX, boxY, boxW, boxH, 18, true, true);
+
+      // message
+      const msg = document.getElementById('message').value || 'Greetings from the cosmos!';
+      const sig = document.getElementById('signature').value || '— Your Friendly Astronaut';
+      const font = document.getElementById('fontSel').value;
+
+      pctx.fillStyle = '#fff';
+      pctx.font = `700 28px ${font}`;
+      pctx.fillText('Postcard from the Night Sky', boxX+24, boxY+44);
+
+      pctx.fillStyle = '#cbd5e1';
+      pctx.font = `400 18px ${font}`;
+      wrapText(pctx, msg, boxX+24, boxY+84, boxW-48, 26);
+
+      pctx.fillStyle = pal[2];
+      pctx.font = `600 18px ${font}`;
+      const metrics = pctx.measureText(sig);
+      pctx.fillText(sig, boxX+boxW-24 - metrics.width, boxY+boxH-20);
+
+      // sparkle accents
+      for(let i=0;i<18;i++){
+        const x = boxX + rand(0, boxW), y = boxY + rand(0, boxH);
+        pctx.globalAlpha = rand(.12,.35);
+        pctx.fillStyle = pal[i % pal.length];
+        pctx.fillRect(x,y,1.4,1.4);
       }
+      pctx.globalAlpha=1;
     }
 
-    function gameLoop() {
-      update();
-      draw();
-      requestAnimationFrame(gameLoop);
+    function roundRect(ctx, x, y, w, h, r, fill, stroke) {
+      if (w < 2 * r) r = w / 2; if (h < 2 * r) r = h / 2;
+      ctx.beginPath();
+      ctx.moveTo(x+r, y);
+      ctx.arcTo(x+w, y,   x+w, y+h, r);
+      ctx.arcTo(x+w, y+h, x,   y+h, r);
+      ctx.arcTo(x,   y+h, x,   y,   r);
+      ctx.arcTo(x,   y,   x+w, y,   r);
+      ctx.closePath();
+      if (fill) ctx.fill(); if (stroke) ctx.stroke();
     }
 
-    // Controls
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "ArrowLeft" && player.x > 0) player.x -= player.speed;
-      if (e.key === "ArrowRight" && player.x < canvas.width - player.width)
-        player.x += player.speed;
+    function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+      const words = text.split(' ');
+      let line = '';
+      for (let n = 0; n < words.length; n++) {
+        const test = line + words[n] + ' ';
+        const w = ctx.measureText(test).width;
+        if (w > maxWidth && n > 0) { ctx.fillText(line, x, y); line = words[n] + ' '; y += lineHeight; }
+        else { line = test; }
+      }
+      ctx.fillText(line, x, y);
+    }
+
+    // --- Actions ---
+    document.getElementById('previewBtn').addEventListener('click', renderPostcard);
+    document.getElementById('saveBtn').addEventListener('click', () => {
+      renderPostcard();
+      const a = document.createElement('a');
+      a.href = pc.toDataURL('image/png');
+      a.download = 'star-postcard.png';
+      a.click();
     });
 
-    // Spawn a new square every 1 second
-    setInterval(spawnSquare, 1000);
+    document.getElementById('randomizeBtn').addEventListener('click', () => {
+      paletteSel.value = Math.floor(Math.random()*PALETTES.length);
+      updatePalettePreview();
+      density.value = 800 + Math.floor(Math.random()*1600);
+      makeStars();
+    });
 
-    gameLoop();
+    paletteSel.addEventListener('change', updatePalettePreview);
+    density.addEventListener('input', () => { densityVal.textContent = density.value; makeStars(); });
+
+    // Keyboard shortcuts: R randomize, S save
+    document.addEventListener('keydown', (e) => {
+      if (e.key.toLowerCase() === 'r') document.getElementById('randomizeBtn').click();
+      if (e.key.toLowerCase() === 's') document.getElementById('saveBtn').click();
+    });
+
+    // Init
+    paletteSel.value = 0; updatePalettePreview();
+    resize(); requestAnimationFrame(loop);
+    setTimeout(renderPostcard, 100);
   </script>
 </body>
 </html>
