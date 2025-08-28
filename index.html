@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Color Changer</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+    }
+    #screen {
+      height: 100vh;
+      width: 100vw;
+      transition: background-color 0.5s ease; /* smooth transition */
+    }
+  </style>
+</head>
+<body>
+  <div id="screen"></div>
+  <script>
+    const colors = [
+      // Reds
+      "#FF0000", "#FF4D4D", "#FF6666",
+      // Oranges
+      "#FF7F00", "#FFA500", "#FFB84D",
+      // Yellows
+      "#FFFF00", "#FFFF66", "#FFD700",
+      // Greens
+      "#00FF00", "#66FF66", "#00FF7F",
+      // Cyans/Blues
+      "#00FFFF", "#40E0D0", "#1E90FF", "#0000FF", "#6495ED",
+      // Purples/Violets
+      "#8A2BE2", "#9370DB", "#DA70D6",
+      // Pinks
+      "#FF1493", "#FF69B4", "#FF85C1",
+      // Extra Brights
+      "#00CED1", "#7FFF00", "#ADFF2F"
+    ];
+
+    let index = 0;
+    const screen = document.getElementById("screen");
+
+    setInterval(() => {
+      screen.style.backgroundColor = colors[index];
+      index = (index + 1) % colors.length;
+    }, 500); // change every 500 ms
+  </script>
+</body>
+</html>
