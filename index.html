@@ -52,26 +52,8 @@
         }
 
         .divider {
-            position: absolute;
-            background: #fff;
-            z-index: 10;
-            transition: all 0.8s cubic-bezier(0.76, 0, 0.24, 1);
+            display: none;
         }
-
-        .divider.vertical {
-            width: 1px;
-            height: 100%;
-            top: 0;
-        }
-
-        .divider.horizontal {
-            height: 1px;
-            width: 100%;
-            left: 0;
-        }
-
-        #divider1 { left: 33.33%; }
-        #divider2 { left: 66.66%; }
 
         .section.inactive {
             flex: 1;
@@ -212,9 +194,9 @@
             border-color: rgba(255,255,255,0.4);
         }
 
-        #work { background: #000; }
-        #about { background: #050505; }
-        #fun { background: #0a0a0a; }
+        #work { background: #000000; }
+        #about { background: #0a0a0a; }
+        #fun { background: #050505; }
 
         .noise {
             position: fixed;
